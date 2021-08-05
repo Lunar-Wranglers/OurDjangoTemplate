@@ -78,8 +78,6 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'OurDjangoTemplate',
-        'USER': 'sillykyle',
-        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '',
     }
@@ -128,3 +126,7 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+GRAPHENE = {
+    'SCHEMA': 'OurDjangoTemplate.schema.schema',
+}
