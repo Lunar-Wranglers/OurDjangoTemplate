@@ -35,16 +35,17 @@ class CreateLink(graphene.Mutation):
         
         )
 class UpdateLink(graphene.Mutation):
-    id = graphene.Int()
+    id = graphene.ID()
     url = graphene.String()
     description = graphene.String()
 
     class Arguments:
         url = graphene.String()
         description = graphene.String()
+        id = graphene.ID()
 
-    def mutate(self, info, url, description):
-        link = Link(url=url, description=description)
+    def mutate(self, info, id, url, description):
+        link = Link(id=id, url=url, description=description)
         link.save()
 
         return UpdateLink(
