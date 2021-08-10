@@ -58,17 +58,20 @@ class UpdateLink(graphene.Mutation):
         description = graphene.String()
 
     def mutate(self, info, url, description, id):
-        user = info.context.user or None
-        print(info.context.headers)
+        user = info.context.user
+        owned_links = Link.objects.filter(owner=info.context.user).values_list("owner_id", flat=True).first()
+        print(owned_links, user.id)
         if user.is_authenticated:
-            link = Link(id=id, url=url, description=description, owner=user)
-            link.save()
-            return UpdateLink(
-                id=link.id,
-                url=link.url,
-                description=link.description,
-                owner=link.owner
-            )
+            if owned_links == user.id:
+                link = Link(id=id, url=url, description=description)
+                link.save()
+                return UpdateLink(
+                    id=link.id,
+                    url=link.url,
+                    description=link.description,
+                    owner=link.owner
+                    )
+            raise Exception('Not authorized to update this link')
         raise Exception('Please Log in')
 class DeleteLink(graphene.Mutation):
     id = graphene.Int()
