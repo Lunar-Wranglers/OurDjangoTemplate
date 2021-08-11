@@ -60,22 +60,23 @@ class UpdateLink(graphene.Mutation):
         description = graphene.String()
         
     def mutate(self, info, url, description, id):
+        # get the user object from the request (info.context)
         user = info.context.user
-        # This provides a query set of all of the users owned links
+        # This provides a query set of the values of all of the users owned links
         owner_links = Link.objects.filter(owner=info.context.user).values()
         # print(owner_links)
-        # iterate through the list to check each value
+        # iterate through the links
         for owner in owner_links:
             # first we extract the owner as a list
             owner = list(owner.values())
             # the owner is the last value in the list
             owned_id = (owner[0])
 
-            print([owned_id, int(id)])
+            # print([owned_id, int(id)])
             # create a list to store the values of the id in the list of owned ids and the id passed in
-            is_owner = [owned_id, int(id)]
+            is_owner = (owned_id, int(id))
             # compare the id of the owned links to the id passed in and if the user is logged in
-            if (is_owner[0] == is_owner[1]) and user.is_authenticated:
+            if is_owner[0] == is_owner[1] and user.is_authenticated:
                 # print('authorized')
                 # mutate the link based on the arguments below
                 link = Link(id=id, url=url, description=description, owner=user)
