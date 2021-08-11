@@ -4,15 +4,26 @@ from graphene_django import DjangoObjectType
 from users.schema import UserType
 
 from .models import Link
+from .models import Image
+from .models import Post
 
 class LinkType(DjangoObjectType):
     class Meta:
         model = Link
-
+class ImageType(DjangoObjectType):
+    class Meta:
+        model = Image
+        filter_fields = ["image"]
+class PostType(DjangoObjectType):
+    class Meta:
+        model = Post
 
 class Query(graphene.ObjectType):
     links = graphene.List(LinkType)
     my_links = graphene.List(LinkType)
+    all_images = graphene.List(ImageType)
+    all_posts = graphene.List(PostType)
+    image = graphene.Field(ImageType, id=graphene.Int(required=True))
 
     def resolve_my_links(self, info):
         # queries only the links they own
@@ -20,9 +31,14 @@ class Query(graphene.ObjectType):
             return Link.objects.none()
         else:
             return Link.objects.filter(owner=info.context.user)
-
     def resolve_links(self, info, **kwargs):
         return Link.objects.all()
+    def resolve_all_images(self, info, **kwargs):
+        return Image.objects.all()
+    def resolve_image(self, info, id):
+        return Image.objects.get(id=id)
+    def resolve_all_posts(self, info):
+        return Post.objects.all()
 
 class CreateLink(graphene.Mutation):
     id = graphene.ID()
@@ -120,9 +136,18 @@ class DeleteLink(graphene.Mutation):
                     id=link.id      
                 )
         raise Exception('Not authorized to delete this link. Please sign in or try a different link.')
-
+class UploadImage(graphene.Mutation):
+    image = graphene.Field(ImageType)
+    def mutate(cls, root, info):
+        user = info.context.user
+        if user.is_authenticated:
+            files = info.context.FILES['imageFile']
+            imgobj = Image(user=user, image=files)
+            imgobj.save()
+            return UploadImage(image=imgobj)
 
 class Mutation(graphene.ObjectType):
     create_link = CreateLink.Field()
     update_link = UpdateLink.Field()
-    delete_link = DeleteLink.Field() 
+    delete_link = DeleteLink.Field()
+    upload_image = UploadImage.Field()

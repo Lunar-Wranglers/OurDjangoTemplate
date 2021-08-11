@@ -2,8 +2,6 @@ from django.contrib.auth import get_user_model
 
 import graphene
 from graphene_django import DjangoObjectType
-import graphql_jwt
-
 
 
 class UserType(DjangoObjectType):
@@ -42,7 +40,7 @@ class UpdateUser(graphene.Mutation):
     def mutate(self, info, username, password, email, id):
         user = info.context.user
         check_owner = ((user.id, int(id)))
-        print(check_owner)
+        # print(check_owner)
         if user.is_authenticated and check_owner[0] == check_owner[1]:
             user = get_user_model()(id=id, username=username, email=email)
             user.set_password(password)
@@ -50,6 +48,22 @@ class UpdateUser(graphene.Mutation):
 
             return UpdateUser(user=user)
         raise Exception("user must be signed in to their account")
+class SignOut(graphene.Mutation):
+    user = graphene.Field(UserType)
+
+    class Arguments:
+        id = graphene.ID()
+    
+    def mutate(self, info, id):
+        user = info.context.user
+
+        check_owner = (user.id, int(id))
+        if user.is_authenticated and check_owner[0] == check_owner[1]:
+            print('signed out')
+            return SignOut(
+                user=user
+            )
+
 class Query(graphene.ObjectType):
     me = graphene.Field(UserType)
     users = graphene.List(UserType)
@@ -67,4 +81,4 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
-    verify_token = graphql_jwt.Verify.Field()
+    sign_out = SignOut.Field()
