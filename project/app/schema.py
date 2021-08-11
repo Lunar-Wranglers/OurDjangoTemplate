@@ -23,7 +23,9 @@ class Query(graphene.ObjectType):
     my_links = graphene.List(LinkType)
     all_images = graphene.List(ImageType)
     all_posts = graphene.List(PostType)
+    my_posts = graphene.List(PostType)
     image = graphene.Field(ImageType, id=graphene.Int(required=True))
+
 
     def resolve_my_links(self, info):
         # queries only the links they own
@@ -39,6 +41,12 @@ class Query(graphene.ObjectType):
         return Image.objects.get(id=id)
     def resolve_all_posts(self, info):
         return Post.objects.all()
+    def resolve_my_posts(self, info):
+        # queries only the links they own
+        if not info.context.user.is_authenticated:
+            return Post.objects.none()
+        else:
+            return Post.objects.filter(owner=info.context.user)
 
 class CreateLink(graphene.Mutation):
     id = graphene.ID()
@@ -136,18 +144,8 @@ class DeleteLink(graphene.Mutation):
                     id=link.id      
                 )
         raise Exception('Not authorized to delete this link. Please sign in or try a different link.')
-class UploadImage(graphene.Mutation):
-    image = graphene.Field(ImageType)
-    def mutate(cls, root, info):
-        user = info.context.user
-        if user.is_authenticated:
-            files = info.context.FILES['imageFile']
-            imgobj = Image(user=user, image=files)
-            imgobj.save()
-            return UploadImage(image=imgobj)
 
 class Mutation(graphene.ObjectType):
     create_link = CreateLink.Field()
     update_link = UpdateLink.Field()
     delete_link = DeleteLink.Field()
-    upload_image = UploadImage.Field()
